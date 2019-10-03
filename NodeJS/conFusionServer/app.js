@@ -27,6 +27,15 @@ connect.then((db) => {
 }, (err) => { console.log(err); });
 
 var app = express();
+
+app.all('*', (req,res,next) => {
+  if(req.secure) {
+    return next();
+  }
+  else {
+    res.redirect(307, 'https://' + req.hostname + ':' + app.get('secPort') + req.url);
+  }
+});
 var cors = require('cors');
 app.use(cors());
 
