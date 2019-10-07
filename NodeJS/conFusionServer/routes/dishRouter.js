@@ -7,7 +7,6 @@ const authenticate = require('../authenticate');
 
 const Dishes = require('../models/dishes');
 
-
 dishRouter.use(bodyParser.json());
 
 dishRouter.route('/')
