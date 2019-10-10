@@ -36,19 +36,27 @@ favoriteRouter.route('/')
             }
             favorite.save()
             .then((favorite) => {
-                console.log('Favorite Created ', favorite);
-                res.statusCode = 200;
-                res.setHeader('Content-Type', 'application/json');
-                res.json(favorite);
+                Favorites.findById(favorite._id)
+                .populate('user')
+                .populate('dishes')
+                .then((favorite) => {
+                    res.statusCode = 200;
+                    res.setHeader('Content-Type', 'application/json');
+                    res.json(favorite);
+                })               
             }, (err) => next(err));
         }
         else {
             Favorites.create({"user": req.user._id, "dishes": req.body})
             .then((favorite) => {
-                console.log('Favorite Created ', favorite);
-                res.statusCode = 200;
-                res.setHeader('Content-Type', 'application/json');
-                res.json(favorite);
+                Favorites.findById(favorite._id)
+                .populate('user')
+                .populate('dishes')
+                .then((favorite) => {
+                    res.statusCode = 200;
+                    res.setHeader('Content-Type', 'application/json');
+                    res.json(favorite);
+                })  
             }, (err) => next(err));
         }
     }, (err) => next(err))
@@ -100,29 +108,45 @@ favoriteRouter.route('/:dishId')
     .then((favorite) => {
         if (favorite) {
             if (favorite.dishes.indexOf(req.params.dishId) === -1) {
-                favorite.dishes.push(req.params.dishId)
+                favorite.dishes.push({ "_id": req.params.dishId });
                 favorite.save()
                 .then((favorite) => {
-                    console.log('Favorite Created ', favorite);
-                    res.statusCode = 200;
-                    res.setHeader('Content-Type', 'application/json');
-                    res.json(favorite);
-                }, (err) => next(err))
+                    Favorites.findById(favorite._id)
+                    .populate('user')
+                    .populate('dishes')
+                    .then((favorite) => {
+                        res.statusCode = 200;
+                        res.setHeader('Content-Type', 'application/json');
+                        res.json(favorite);
+                    })
+                })
+                .catch((err) => {
+                    return next(err);
+                });
             }
         }
         else {
-            Favorites.create({"user": req.user._id, "dishes": [req.params.dishId]})
-            .then((favorite) => {
-                console.log('Favorite Created ', favorite);
-                res.statusCode = 200;
-                res.setHeader('Content-Type', 'application/json');
-                res.json(favorite);
-            }, (err) => next(err))
+            if (favorite.dishes.indexOf(req.params.dishId) < 0) {                
+                favorite.dishes.push(req.body);
+                favorite.save()
+                .then((favorite) => {
+                    Favorites.findById(favorite._id)
+                    .populate('user')
+                    .populate('dishes')
+                    .then((favorite) => {
+                        res.statusCode = 200;
+                        res.setHeader('Content-Type', 'application/json');
+                        res.json(favorite);
+                    })
+                })
+                .catch((err) => {
+                    return next(err);
+                })
+            }
         }
     }, (err) => next(err))
     .catch((err) => next(err)); 
 })
-
 .put(cors.corsWithOptions,authenticate.verifyUser,(req,res,next) => {
     res.statusCode = 403;
     res.end('PUT operation not supported on /favorites/' + req.params.dishId);
@@ -136,11 +160,16 @@ favoriteRouter.route('/:dishId')
                 favorite.dishes.splice(index, 1);
                 favorite.save()
                 .then((favorite) => {
-                    console.log('Favorite Deleted ', favorite);
-                    res.statusCode = 200;
-                    res.setHeader('Content-Type', 'application/json');
-                    res.json(favorite);
-                }, (err) => next(err));
+                    Favorites.findById(favorite._id)
+                    .populate('user')
+                    .populate('dishes')
+                    .then((favorite) => {
+                        console.log('Favorite Dish Created',favorite);
+                        res.statusCode = 200;
+                        res.setHeader('Content-Type', 'application/json');
+                        res.json(favorite);
+                    }) 
+                })
             }
             else {
                 err = new Error('Dish ' + req.params.dishId + 'not found');
